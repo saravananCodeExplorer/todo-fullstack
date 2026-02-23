@@ -1,7 +1,7 @@
 const db = require("../config/db");
 
 
-// 📌 GET ALL TASKS
+//  GET ALL TASKS
 exports.getTasks = (req, res) => {
   db.query("SELECT * FROM tasks ORDER BY id DESC", (err, result) => {
     if (err) return res.status(500).json(err);
@@ -9,39 +9,22 @@ exports.getTasks = (req, res) => {
   });
 };
 
-
-//  ADD TASK
+// add task controler
 exports.addTask = (req, res) => {
-  const { title } = req.body;
+  const { title, due_date, status } = req.body;
 
-  if (!title || !title.trim()) {
-    return res.status(400).json({ message: "Task cannot be empty" });
-  }
+  if (!title) return res.status(400).send("Task cannot be empty");
 
   db.query(
-    "INSERT INTO tasks (title) VALUES (?)",
-    [title],
-    (err, result) => {
-      if (err) return res.status(500).json(err);
-      res.json({ message: "Task added", id: result.insertId });
-    }
-  );
-};
-
-
-// UPDATE STATUS (Complete / Pending)
-exports.updateStatus = (req, res) => {
-  const { id } = req.params;
-
-  db.query(
-    "UPDATE tasks SET is_completed = NOT is_completed WHERE id = ?",
-    [id],
+    "INSERT INTO tasks (title, due_date, status) VALUES (?, ?, ?)",
+    [title, due_date, status],
     (err) => {
-      if (err) return res.status(500).json(err);
-      res.json({ message: "Status updated" });
+      if (err) return res.status(500).send(err);
+      res.send("Task added");
     }
   );
 };
+
 
 
 //  UPDATE TASK TITLE 
@@ -62,7 +45,25 @@ exports.updateTitle = (req, res) => {
     }
   );
 };
+// update task status
+exports.updateStatus = (req, res) => {
+  const { status } = req.body;
+  const { id } = req.params;
 
+  if (!status) {
+    return res.status(400).json({ message: "Status is required" });
+  }
+
+  db.query(
+    "UPDATE tasks SET status = ? WHERE id = ?",
+    [status, id],
+    (err, result) => {
+      if (err) return res.status(500).json(err);
+
+      res.json({ message: "Status updated" });
+    }
+  );
+};
 
 //  DELETE TASK
 exports.deleteTask = (req, res) => {
@@ -73,3 +74,4 @@ exports.deleteTask = (req, res) => {
     res.json({ message: "Task deleted" });
   });
 };
+
